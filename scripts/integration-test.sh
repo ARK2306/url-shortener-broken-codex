@@ -21,9 +21,10 @@ test "${ttl}" -gt 0
 test "${ttl}" -le 3600
 
 for _ in 1 2; do
-  headers="$(curl --silent --show-error --dump-header - --output /dev/null "${base_url}/${code}")"
+  headers="$(curl --silent --show-error --dump-header - --output /dev/null \
+    "${base_url}/${code}" | tr -d '\r')"
   grep -Eq '^HTTP/[0-9.]+ 302' <<<"${headers}"
-  grep -Eiq '^location: https://example\.com/?\r?$' <<<"${headers}"
+  grep -Eiq '^location: https://example\.com/?$' <<<"${headers}"
 done
 
 analytics=""
