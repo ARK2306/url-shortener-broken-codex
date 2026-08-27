@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: URL Shortener API
+  version: 1.0.0
+  description: Shorten URLs and inspect click analytics.
+servers:
+  - url: http://localhost:3000
+paths:
+  /shorten:
+    post:
+      summary: Create a short URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        "201":
+          description: Short URL created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShortUrl"
+        "400":
+          description: Invalid request
+  /{code}:
+    get:
+      summary: Redirect to the original URL
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect
+        "404":
+          description: Short code not found
+  /analytics/{code}:
+    get:
+      summary: Get click analytics for a short code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analytics payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analytics"
+        "404":
+          description: Short code not found
+components:
+  schemas:
+    ShortUrl:
+      type: object
+      properties:
+        code:
+          type: string
+        url:
+          type: string
+        short_url:
+          type: string
+    Analytics:
+      type: object
+      properties:
+        code:
+          type: string
+        url:
+          type: string
+        clicks:
+          # BUG: clicks is defined as a string instead of integer
+          type: string

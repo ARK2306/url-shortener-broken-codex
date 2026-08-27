@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      # BUG: PGUSER instead of POSTGRES_USER (wrong env var for the official image)
+      PGUSER: shortener
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: shortener
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # BUG: healthcheck user may not match the actual database user
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: shortener
+      PGPASSWORD: secret
+      PGDATABASE: shortener
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: shortener
+    ports:
+      - "3000:3000"
+    # BUG: depends on postgres and redis but no condition for healthy
+    depends_on:
+      - postgres
+      - redis
+    # BUG: no healthcheck for the API service
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: shortener
+      PGPASSWORD: secret
+      PGDATABASE: shortener
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: shortener
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
