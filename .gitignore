@@ -1,0 +1,4 @@
+api/node_modules/
+worker/__pycache__/
+*.pyc
+.DS_Store

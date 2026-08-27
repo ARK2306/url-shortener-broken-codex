@@ -6,6 +6,20 @@ info:
 servers:
   - url: http://localhost:3000
 paths:
+  /health:
+    get:
+      summary: Check API dependencies
+      responses:
+        "200":
+          description: PostgreSQL and Redis are available
+        "503":
+          description: A dependency is unavailable
+  /trace-test:
+    get:
+      summary: Generate an OpenTelemetry test trace
+      responses:
+        "200":
+          description: Test trace generated
   /shorten:
     post:
       summary: Create a short URL
@@ -66,20 +80,24 @@ components:
   schemas:
     ShortUrl:
       type: object
+      required:
+        - code
       properties:
         code:
-          type: string
-        url:
-          type: string
-        short_url:
           type: string
     Analytics:
       type: object
+      required:
+        - code
+        - clicks
+        - last_clicked
       properties:
         code:
           type: string
-        url:
-          type: string
         clicks:
-          # BUG: clicks is defined as a string instead of integer
+          type: integer
+          minimum: 0
+        last_clicked:
           type: string
+          format: date-time
+          nullable: true
