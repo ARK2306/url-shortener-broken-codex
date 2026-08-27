@@ -14,6 +14,8 @@ jobs:
   build-test-push:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
     steps:
       - uses: actions/checkout@v5
@@ -51,15 +53,15 @@ jobs:
         run: docker compose down --volumes
 
       - name: Log in to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.GHCR_TOKEN != ''
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Push images to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.GHCR_TOKEN != ''
         env:
           IMAGE_REPOSITORY: ${{ github.repository }}
         run: |
@@ -72,3 +74,7 @@ jobs:
           docker push "ghcr.io/${image_repository}/api:latest"
           docker push "ghcr.io/${image_repository}/worker:${GITHUB_SHA}"
           docker push "ghcr.io/${image_repository}/worker:latest"
+
+      - name: Report skipped image publishing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.GHCR_TOKEN == ''
+        run: echo '::warning::GHCR_TOKEN is not configured; skipping GHCR image publishing.'

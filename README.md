@@ -76,4 +76,5 @@ Compose images, waits for every service healthcheck, and runs the integration
 test. Pushes to `main` also publish API and worker images to
 `ghcr.io/<owner>/<repository>/{api,worker}` with both the commit SHA and
 `latest` tags. Configure a repository secret named `GHCR_TOKEN` with package
-write permission for publishing.
+write permission for publishing. When the secret is absent, verification still
+runs and image publishing is skipped with a workflow warning.
